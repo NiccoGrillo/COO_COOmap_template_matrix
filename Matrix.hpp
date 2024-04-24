@@ -15,7 +15,7 @@ namespace algebra {
     template <typename T, StorageOrder order>
     class Matrix {
     private:
-        std::map<Key, T, Compare> data;
+        std::map<Key, T, Compare<T, order>> data;
         std::size_t rows, cols;
         bool compressed;
         // compressed format
@@ -46,6 +46,9 @@ namespace algebra {
             rows(rows), 
             cols(cols),
             compressed(true) {};
+
+        //file reader constructor (defined in MatrixFileConstructor.hpp)
+        Matrix(const std::string& file_name);
 
         void resize(std::size_t rows, std::size_t cols) {
             this->rows = rows;
@@ -140,10 +143,50 @@ namespace algebra {
                 return _matrix_vector_uncompressed(vec);
             }
             if constexpr (Store == StorageOrder::row) {
-                return _matrix_vector_row(vec);
+                return _matrix_vector_row_compressed_RowMajor(vec);
             }
-            return _matrix_vector_col(vec);
+            return _matrix_vector_row_compressed_ColMajor(vec);
         };
+
+        friend std::vector<T> operator*(const std::vector<T>& v, const Matrix& m) {
+            // if (!_is_compressed) {
+            //     return _vector_matrix_uncompressed(vec);
+            // }
+            // if constexpr (Store == StorageOrder::row) {
+            //     return _vector_matrix_row(vec);
+            // }
+            // return _vector_matrix_col(vec);
+            return {};
+        };
+
+        //printing
+        friend std::ostream& operator<<(std::ostream& os, const Matrix& m) {
+            std::string compr_string = m.is_compressed() ? "Compressed" : "Uncompressed";
+            os << "Matrix in ";
+            if (m.is_compressed()) {
+                os << compr_string << " format" << "with dimensions " << m.rows << "x" << m.cols << ":\n";
+                os << "Values: \n";
+                for (const auto& v : m.values) {
+                    os << v << " ";
+                }
+                os << "\nRow indices: \n";
+                for (const auto& r : m.row_indices) {
+                    os << r << " ";
+                }
+                os << "\nCol indices: \n";
+                for (const auto& c : m.col_indices) {
+                    os << c << " ";
+                }
+            } else {
+                os << compr_string << " format" << "with dimensions " << m.rows << "x" << m.cols << ":\n";
+                for (const auto& [k, v] : m.data) {
+                    os << "(" k.first << ", " << k.second << ")  ->  " << v << "\n";
+                }
+            }
+            return os;
+        }
+
+
 
         // extra
         friend Matrix operator*(const Matrix& m1, const Matrix& m2) {
@@ -151,6 +194,7 @@ namespace algebra {
         }
 
         private:
+            //compression methods
             void compressRowMajor() {
                 if (is_compressed())
                 {
@@ -299,16 +343,49 @@ namespace algebra {
                 }
             }
 
-            std::vector<T> mat_vec_prod_uncompressed(std::vector<T> vec) const {
+            //matrix vector multiplication
+            std::vector<T> _matrix_vector_uncompressed(std::vector<T> vec) const {
                 std::vector<T> out(rows, 0);
-                std::transform(data.begin(), data.end(), out.begin(),
-                    [&vec](const auto& kv) { return vec[kv.first[1]] * kv.second; },
-                    std::plus<>());
+                if constexpr (Store == StorageOrder::ROW_MAJOR) {
+                    std::transform(data.begin(), data.end(), out.begin(),
+                        [&vec](const auto& kv) { return vec[kv.first[1]] * kv.second; },
+                        std::plus<>());
+                } else { //this won't work
+                    for (const auto& [k, v] : data) {
+                        out[k[0]] += vec[k[1]] * v;
+                    }
+                }
 
                 return out;
             }
 
+            std::vector<T> _matrix_vector_row_compressed_RowMajor(std::vector<T> vec) const {
+                std::vector<T> out(rows, 0);
+                std::size_t num_non_zero = 0;
+                for (std::size_t i = 0; i < rows; ++i) {
+                    for (std::size_t j = row_indices[i]; j < row_indices[i + 1]; ++j) {
+                        out[i] += vec[col_indices[j]] * values[j];
+                    }
+                }
 
+                return out;
+            }
+
+            std::vector<T> _matrix_vector_row_compressed_ColMajor(std::vector<T> vec) const {
+                std::vector<T> res;
+                out.resize(num_rows + 1, 0);
+                // iterate through the colums
+                for (std::size_t i = 0; i < cols; ++i) {
+                    for (std::size_t j = col_indices[i]; j < _vec1[i + 1];
+                        ++row_idx) {
+                    out[_vec2[row_idx]] += (vec[col_idx] * _values[row_idx]);
+                    }
+                }
+                return res;
+                }
+
+
+        
     };
 }
 

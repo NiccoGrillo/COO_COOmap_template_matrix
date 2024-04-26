@@ -1,6 +1,5 @@
-
 Second challenge/assignment of the PACS course (Advanced programming for scientific computing). 
-Sure, here's a basic README file for your Matrix project:
+
 
 
 # COO_CSR Template Matrix Project

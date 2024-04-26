@@ -1,18 +1,7 @@
 CXX      ?= g++
 CXXFLAGS ?= -std=c++20
 CPPFLAGS ?= -O3 -Wall -I"../include"
-LINK.o := $(LINK.cc) # implicit flag to enable the linking
-
-# Set the default Eigen include path
-# EIGEN_INC ?= ${mkEigenInc}
-# 
-# # Override the default Eigen include path based on a flag
-# ifdef EIGEN_MAC
-# 	EIGEN_INC := /opt/homebrew/include/eigen3
-# endif
-# 
-# CPPFLAGS += -I$(EIGEN_INC)
-
+LINK.o := $(LINK.cc) 
 
 SRCS = $(wildcard *.cpp)
 OBJS = $(SRCS:.cpp=.o)
@@ -21,12 +10,9 @@ HEADERS = $(wildcard *.hpp)
 exe_sources = $(filter test%.cpp, $(SRCS))
 EXEC = $(exe_sources:.cpp=)
 
-.PHONY: all debug clean distclean
+.PHONY: all clean distclean
 
 all: $(EXEC)
-
-debug: CPPFLAGS += -DDEBUG
-debug: all
 
 $(EXEC): $(OBJS)
 

@@ -64,5 +64,3 @@ make distclean
 
 This project is thought to have no license.
 ```
-
-Please replace "executable_name" with the actual name of your executable, and update the other sections as necessary to match your project's details.

@@ -1,0 +1,9 @@
+- Documentation clear and complete
+- tests are accurate
+- you could let the user decide the matrix to read from command line
+
+- friend functions should be defined outside of the class
+
+- avoid definition of long methods inside the class body
+
+- good code structure 
